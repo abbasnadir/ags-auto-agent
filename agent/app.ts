@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import 'dotenv/config';
+import { agsTools } from "./tools/readFile.js";
 
 const client = new OpenAI({
   baseURL: "http://localhost:20128/v1",
@@ -9,11 +10,12 @@ const client = new OpenAI({
 async function testConnection() {
   const response = await client.chat.completions.create({
     model: 'auto/best-fast',
-    messages: [{ role: 'user', content: 'Hello!' }],
+    messages: [{ role: 'user', content: 'What are the dependencies in my ./package.json file?' }],
+    tools: agsTools,
+    tool_choice: "auto"
   });
 
-  console.log(response.choices[0]?.message?.content ?? "No response");
-
+ 
   console.log(response);
 }
 
