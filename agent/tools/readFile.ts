@@ -30,9 +30,18 @@ export const MAX_FILE_BYTES = 64 * 1024;
 // leave `root`, also through symlinks, and files over MAX_FILE_BYTES are rejected.
 export async function readLocalFile(filePath: string, root: string = process.cwd()): Promise<string> {
     const base = await realpath(root);
-    const target = await realpath(path.resolve(base, filePath));
-    const relative = path.relative(base, target);
-    if (relative === ".." || relative.startsWith(".." + path.sep) || path.isAbsolute(relative)) {
+    const isInside = (target: string) => {
+        const relative = path.relative(base, target);
+        return relative !== ".." && !relative.startsWith(".." + path.sep) && !path.isAbsolute(relative);
+    };
+
+    // Checked before and after resolving symlinks, so nothing outside is even looked up.
+    const requested = path.resolve(base, filePath);
+    if (!isInside(requested)) {
+        throw new Error(`${filePath} is outside ${base}`);
+    }
+    const target = await realpath(requested);
+    if (!isInside(target)) {
         throw new Error(`${filePath} is outside ${base}`);
     }
 
